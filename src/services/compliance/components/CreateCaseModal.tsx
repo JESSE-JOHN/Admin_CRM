@@ -6,7 +6,7 @@ import { ComplianceCaseType, Priority } from '../../../types';
 interface CreateCaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCaseCreated: () => void;
+  onCaseCreated: (caseData: any) => Promise<void>;
 }
 
 const CreateCaseModal: React.FC<CreateCaseModalProps> = ({
@@ -106,24 +106,29 @@ const CreateCaseModal: React.FC<CreateCaseModalProps> = ({
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/v1/compliance/cases', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     ...formData,
-      //     riskScore: formData.riskScore ? parseInt(formData.riskScore) : undefined
-      //   })
-      // });
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const caseData = {
+        ...formData,
+        riskScore: formData.riskScore ? parseInt(formData.riskScore) : undefined
+      };
       
-      console.log('Creating compliance case:', formData);
-      onCaseCreated();
+      await onCaseCreated(caseData);
+      
+      // Reset form on success
+      setFormData({
+        customerId: '',
+        type: '',
+        subject: '',
+        description: '',
+        priority: Priority.MEDIUM,
+        assignedTo: '',
+        riskScore: '',
+        dueDate: ''
+      });
+      setErrors([]);
+      onClose();
     } catch (error) {
       console.error('Failed to create compliance case:', error);
-      setErrors(['Failed to create compliance case. Please try again.']);
+      setErrors([error instanceof Error ? error.message : 'Failed to create compliance case. Please try again.']);
     } finally {
       setLoading(false);
     }

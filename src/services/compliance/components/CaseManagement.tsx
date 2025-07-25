@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Eye, Edit, Flag, Clock, User, AlertTriangle } from 'lucide-react';
 import { ComplianceCase, ComplianceCaseType, ComplianceCaseStatus, Priority } from '../../../types';
+import { ComplianceService } from '../services/ComplianceService';
 import CreateCaseModal from './CreateCaseModal';
 import CaseDetailModal from './CaseDetailModal';
 
 const CaseManagement: React.FC = () => {
+  const complianceService = new ComplianceService();
   const [cases, setCases] = useState<ComplianceCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -27,55 +29,24 @@ const CaseManagement: React.FC = () => {
   const loadCases = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/v1/compliance/cases?' + new URLSearchParams({
-      //   ...filters,
-      //   page: currentPage.toString()
-      // }));
-      // const data = await response.json();
-      
-      // Mock data for demonstration
-      const mockCases: ComplianceCase[] = Array.from({ length: 15 }, (_, i) => ({
-        id: `case-${i + 1}`,
-        caseNumber: `COMP-202401-${String(i + 1).padStart(4, '0')}`,
-        customerId: `WRM${String(i + 1).padStart(6, '0')}`,
-        type: [
-          ComplianceCaseType.AML_SUSPICIOUS_ACTIVITY,
-          ComplianceCaseType.KYC_NON_COMPLIANCE,
-          ComplianceCaseType.SANCTIONS_SCREENING,
-          ComplianceCaseType.PEP_MATCH,
-          ComplianceCaseType.FRAUD_RELATED
-        ][i % 5],
-        status: [
-          ComplianceCaseStatus.OPEN,
-          ComplianceCaseStatus.IN_REVIEW,
-          ComplianceCaseStatus.PENDING_APPROVAL,
-          ComplianceCaseStatus.RESOLVED,
-          ComplianceCaseStatus.ESCALATED
-        ][i % 5],
-        priority: [Priority.LOW, Priority.MEDIUM, Priority.HIGH, Priority.CRITICAL][i % 4],
-        subject: [
-          'Suspicious transaction pattern detected',
-          'KYC documents require verification',
-          'Customer appears on sanctions list',
-          'PEP status confirmation needed',
-          'Fraudulent activity reported'
-        ][i % 5],
-        description: 'Detailed description of the compliance case...',
-        assignedTo: i % 3 === 0 ? `officer-${i + 1}` : undefined,
-        riskScore: Math.floor(Math.random() * 100),
-        dueDate: new Date(Date.now() + (i * 86400000)).toISOString(),
-        createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: 'system',
-        notes: [],
-        actions: []
-      }));
+      const result = await complianceService.getCases({
+        type: filters.type as ComplianceCaseType,
+        status: filters.status as ComplianceCaseStatus,
+        priority: filters.priority as Priority,
+        assignedTo: filters.assignedTo,
+        page: currentPage,
+        limit: 20,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
 
-      setCases(mockCases);
-      setTotalPages(3); // Mock pagination
+      setCases(result.cases);
+      setTotalPages(Math.ceil(result.total / result.limit));
     } catch (error) {
       console.error('Failed to load compliance cases:', error);
+      // Fallback to empty state on error
+      setCases([]);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
@@ -148,12 +119,35 @@ const CaseManagement: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleCaseCreated = () => {
+  const handleCaseCreated = async (caseData: any) => {
+    try {
+      await complianceService.createCase({
+        ...caseData,
+        createdBy: 'current-user' // TODO: Get from auth context
+      });
+      loadCases();
+    } catch (error) {
+      console.error('Failed to create case:', error);
+      throw error;
+    }
+  };
+
+  const handleCaseModalClose = () => {
     setShowCreateModal(false);
     loadCases();
   };
 
-  const handleCaseUpdated = () => {
+  const handleCaseUpdated = async (caseId: string, updates: any) => {
+    try {
+      await complianceService.updateCase(caseId, updates, 'current-user');
+      loadCases();
+    } catch (error) {
+      console.error('Failed to update case:', error);
+      throw error;
+    }
+  };
+
+  const handleCaseModalUpdated = () => {
     setShowDetailModal(false);
     loadCases();
   };
@@ -442,7 +436,7 @@ const CaseManagement: React.FC = () => {
       {showCreateModal && (
         <CreateCaseModal
           isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
+          onClose={handleCaseModalClose}
           onCaseCreated={handleCaseCreated}
         />
       )}
@@ -452,7 +446,7 @@ const CaseManagement: React.FC = () => {
           isOpen={showDetailModal}
           onClose={() => setShowDetailModal(false)}
           case={selectedCase}
-          onCaseUpdated={handleCaseUpdated}
+          onCaseUpdated={handleCaseModalUpdated}
         />
       )}
     </div>

@@ -430,4 +430,57 @@ export class ComplianceService {
 
     return updatedCase as any;
   }
+
+  /**
+   * Get compliance alerts
+   */
+  async getComplianceAlerts(filters: {
+    alertType?: string;
+    severity?: any;
+    status?: any;
+    assignedTo?: string;
+  } = {}): Promise<any[]> {
+    // TODO: Implement actual database query for compliance alerts
+    // For now, return mock data that would come from a real alerts system
+    const mockAlerts = [
+      {
+        id: '1',
+        alertType: 'SUSPICIOUS_TRANSACTION',
+        severity: 'HIGH',
+        customerId: 'WRM001234',
+        transactionId: 'txn-123',
+        subject: 'Suspicious transaction pattern detected',
+        description: 'Multiple high-value transactions in short timeframe',
+        status: 'TRIGGERED',
+        assignedTo: filters.assignedTo || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+
+    // Apply filters
+    return mockAlerts.filter(alert => {
+      if (filters.alertType && alert.alertType !== filters.alertType) return false;
+      if (filters.severity && alert.severity !== filters.severity) return false;
+      if (filters.status && alert.status !== filters.status) return false;
+      if (filters.assignedTo && alert.assignedTo !== filters.assignedTo) return false;
+      return true;
+    });
+  }
+
+  /**
+   * Acknowledge a compliance alert
+   */
+  async acknowledgeAlert(alertId: string, acknowledgedBy: string): Promise<void> {
+    // TODO: Implement actual database update for alert acknowledgment
+    console.log(`Alert ${alertId} acknowledged by ${acknowledgedBy}`);
+  }
+
+  /**
+   * Resolve a compliance alert
+   */
+  async resolveAlert(alertId: string, resolvedBy: string): Promise<void> {
+    // TODO: Implement actual database update for alert resolution
+    console.log(`Alert ${alertId} resolved by ${resolvedBy}`);
+  }
 }

@@ -106,13 +106,17 @@ export class KYCReviewService {
     });
 
     // Create compliance case action if there's an associated case
-    await this.complianceService.addCaseAction(
-      `kyc-${id}`, // Use KYC review ID as case reference
-      ComplianceActionType.KYC_APPROVED,
-      `KYC review approved for customer ${review.customerId}`,
-      reviewedBy,
-      { reviewId: id, notes }
-    );
+    try {
+      await this.complianceService.addCaseAction(
+        `kyc-${id}`, // Use KYC review ID as case reference
+        ComplianceActionType.KYC_APPROVED,
+        `KYC review approved for customer ${review.customerId}`,
+        reviewedBy,
+        { reviewId: id, notes }
+      );
+    } catch (error) {
+      console.warn('Failed to log KYC approval action:', error);
+    }
 
     // TODO: Update customer KYC status in customer table
     // This would typically update the customer's kycStatus to VERIFIED
@@ -142,13 +146,17 @@ export class KYCReviewService {
     });
 
     // Create compliance case action
-    await this.complianceService.addCaseAction(
-      `kyc-${id}`,
-      ComplianceActionType.KYC_REJECTED,
-      `KYC review rejected for customer ${review.customerId}: ${rejectionReason}`,
-      reviewedBy,
-      { reviewId: id, rejectionReason, notes }
-    );
+    try {
+      await this.complianceService.addCaseAction(
+        `kyc-${id}`,
+        ComplianceActionType.KYC_REJECTED,
+        `KYC review rejected for customer ${review.customerId}: ${rejectionReason}`,
+        reviewedBy,
+        { reviewId: id, rejectionReason, notes }
+      );
+    } catch (error) {
+      console.warn('Failed to log KYC rejection action:', error);
+    }
 
     // TODO: Update customer KYC status in customer table
     // This would typically update the customer's kycStatus to REJECTED
@@ -177,13 +185,17 @@ export class KYCReviewService {
     });
 
     // Create compliance case action
-    await this.complianceService.addCaseAction(
-      `kyc-${id}`,
-      ComplianceActionType.DOCUMENT_REQUESTED,
-      `Additional information requested for customer ${review.customerId}: ${details}`,
-      reviewedBy,
-      { reviewId: id, requestDetails: details, notes }
-    );
+    try {
+      await this.complianceService.addCaseAction(
+        `kyc-${id}`,
+        ComplianceActionType.DOCUMENT_REQUESTED,
+        `Additional information requested for customer ${review.customerId}: ${details}`,
+        reviewedBy,
+        { reviewId: id, requestDetails: details, notes }
+      );
+    } catch (error) {
+      console.warn('Failed to log KYC info request action:', error);
+    }
 
     // TODO: Send notification to customer requesting additional information
 
@@ -209,13 +221,17 @@ export class KYCReviewService {
     });
 
     // Create compliance case action
-    await this.complianceService.addCaseAction(
-      `kyc-${id}`,
-      ComplianceActionType.ESCALATED_TO_SUPERVISOR,
-      `KYC review escalated for customer ${review.customerId}: ${reason}`,
-      escalatedBy,
-      { reviewId: id, reason }
-    );
+    try {
+      await this.complianceService.addCaseAction(
+        `kyc-${id}`,
+        ComplianceActionType.ESCALATED_TO_SUPERVISOR,
+        `KYC review escalated for customer ${review.customerId}: ${reason}`,
+        escalatedBy,
+        { reviewId: id, reason }
+      );
+    } catch (error) {
+      console.warn('Failed to log KYC escalation action:', error);
+    }
 
     return review as any;
   }

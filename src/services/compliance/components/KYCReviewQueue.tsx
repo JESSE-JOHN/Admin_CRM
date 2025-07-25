@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FileCheck, Eye, CheckCircle, XCircle, AlertTriangle, Clock, User, Filter } from 'lucide-react';
 import { KYCReview, KYCReviewStatus, Priority } from '../../../types';
+import { KYCReviewService } from '../services/KYCReviewService';
 import KYCReviewModal from './KYCReviewModal';
 
 const KYCReviewQueue: React.FC = () => {
+  const kycReviewService = new KYCReviewService();
   const [reviews, setReviews] = useState<KYCReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -24,37 +26,21 @@ const KYCReviewQueue: React.FC = () => {
   const loadKYCReviews = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/v1/compliance/kyc-reviews?' + new URLSearchParams({
-      //   ...filters,
-      //   page: currentPage.toString()
-      // }));
-      // const data = await response.json();
-      
-      // Mock data for demonstration
-      const mockReviews: KYCReview[] = Array.from({ length: 12 }, (_, i) => ({
-        id: `review-${i + 1}`,
-        customerId: `WRM${String(i + 1).padStart(6, '0')}`,
-        customerType: i % 3 === 0 ? 'BUSINESS' : 'PERSONAL',
-        kycStatus: [
-          KYCReviewStatus.PENDING_REVIEW,
-          KYCReviewStatus.IN_REVIEW,
-          KYCReviewStatus.REQUIRES_MORE_INFO,
-          KYCReviewStatus.ESCALATED
-        ][i % 4],
-        submissionDate: new Date(Date.now() - i * 86400000 * 2).toISOString(),
-        priority: [Priority.LOW, Priority.MEDIUM, Priority.HIGH, Priority.CRITICAL][i % 4],
-        riskFlags: i % 3 === 0 ? ['high_risk_country', 'large_transaction'] : [],
-        complianceScore: Math.floor(Math.random() * 100),
-        dueDate: new Date(Date.now() + (3 - i) * 86400000).toISOString(),
-        reviewedBy: i % 4 === 1 ? 'officer-1' : undefined,
-        createdAt: new Date(Date.now() - i * 86400000 * 2).toISOString(),
-        updatedAt: new Date().toISOString()
-      }));
+      const result = await kycReviewService.getPendingReviews({
+        kycStatus: filters.kycStatus as KYCReviewStatus,
+        priority: filters.priority as Priority,
+        customerType: filters.customerType,
+        overdue: filters.overdue,
+        page: currentPage,
+        limit: 20,
+        sortBy: 'submissionDate',
+        sortOrder: 'asc'
+      });
 
-      setReviews(mockReviews);
+      setReviews(result.reviews);
     } catch (error) {
       console.error('Failed to load KYC reviews:', error);
+      setReviews([]);
     } finally {
       setIsLoading(false);
     }
@@ -133,18 +119,17 @@ const KYCReviewQueue: React.FC = () => {
     if (!assignTo) return;
 
     try {
-      // TODO: Replace with actual API call
-      // await fetch('/api/v1/compliance/kyc-reviews/bulk-assign', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ reviewIds: selectedReviews, assignedTo: assignTo })
-      // });
-
-      console.log('Bulk assigning reviews:', selectedReviews, 'to:', assignTo);
+      await kycReviewService.bulkAssignReviews(
+        selectedReviews,
+        assignTo,
+        'current-user' // TODO: Get from auth context
+      );
+      
       setSelectedReviews([]);
       loadKYCReviews();
     } catch (error) {
       console.error('Failed to bulk assign reviews:', error);
+      alert('Failed to bulk assign reviews. Please try again.');
     }
   };
 

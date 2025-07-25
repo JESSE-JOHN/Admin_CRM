@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, AlertTriangle, CheckCircle, XCircle, Clock, User, Filter } from 'lucide-react';
 import { ComplianceAlert, AlertSeverity, AlertStatus } from '../../../types';
+import { ComplianceService } from '../services/ComplianceService';
 
 const ComplianceAlerts: React.FC = () => {
+  const complianceService = new ComplianceService();
   const [alerts, setAlerts] = useState<ComplianceAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -19,42 +21,18 @@ const ComplianceAlerts: React.FC = () => {
   const loadComplianceAlerts = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/v1/compliance/alerts?' + new URLSearchParams(filters));
-      // const data = await response.json();
-      
-      // Mock data for demonstration
-      const mockAlerts: ComplianceAlert[] = Array.from({ length: 10 }, (_, i) => ({
-        id: `alert-${i + 1}`,
-        alertType: [
-          'SUSPICIOUS_TRANSACTION',
-          'HIGH_RISK_CUSTOMER',
-          'SANCTIONS_MATCH',
-          'PEP_DETECTED',
-          'VELOCITY_CHECK',
-          'LARGE_CASH_TRANSACTION'
-        ][i % 6],
-        severity: [AlertSeverity.LOW, AlertSeverity.MEDIUM, AlertSeverity.HIGH, AlertSeverity.CRITICAL][i % 4],
-        customerId: `WRM${String(i + 1).padStart(6, '0')}`,
-        transactionId: i % 2 === 0 ? `txn-${i + 1}` : undefined,
-        subject: [
-          'Suspicious transaction pattern detected',
-          'Customer flagged as high risk',
-          'Potential sanctions list match',
-          'PEP status requires verification',
-          'Unusual transaction velocity',
-          'Large cash transaction reported'
-        ][i % 6],
-        description: 'Detailed description of the compliance alert...',
-        status: [AlertStatus.TRIGGERED, AlertStatus.ACKNOWLEDGED, AlertStatus.RESOLVED][i % 3],
-        assignedTo: i % 3 === 0 ? `officer-${i + 1}` : undefined,
-        createdAt: new Date(Date.now() - i * 3600000).toISOString(),
-        updatedAt: new Date().toISOString()
-      }));
+      // Use the compliance service to get alerts
+      const alertsData = await complianceService.getComplianceAlerts({
+        alertType: filters.alertType,
+        severity: filters.severity as AlertSeverity,
+        status: filters.status as AlertStatus,
+        assignedTo: filters.assignedTo
+      });
 
-      setAlerts(mockAlerts);
+      setAlerts(alertsData);
     } catch (error) {
       console.error('Failed to load compliance alerts:', error);
+      setAlerts([]);
     } finally {
       setIsLoading(false);
     }
@@ -108,11 +86,11 @@ const ComplianceAlerts: React.FC = () => {
   const handleAcknowledge = async (alertId: string) => {
     if (window.confirm('Are you sure you want to acknowledge this alert?')) {
       try {
-        // TODO: Replace with actual API call
-        console.log('Acknowledging alert:', alertId);
+        await complianceService.acknowledgeAlert(alertId, 'current-user');
         loadComplianceAlerts();
       } catch (error) {
         console.error('Failed to acknowledge alert:', error);
+        alert('Failed to acknowledge alert. Please try again.');
       }
     }
   };
@@ -120,11 +98,11 @@ const ComplianceAlerts: React.FC = () => {
   const handleResolve = async (alertId: string) => {
     if (window.confirm('Are you sure you want to resolve this alert?')) {
       try {
-        // TODO: Replace with actual API call
-        console.log('Resolving alert:', alertId);
+        await complianceService.resolveAlert(alertId, 'current-user');
         loadComplianceAlerts();
       } catch (error) {
         console.error('Failed to resolve alert:', error);
+        alert('Failed to resolve alert. Please try again.');
       }
     }
   };

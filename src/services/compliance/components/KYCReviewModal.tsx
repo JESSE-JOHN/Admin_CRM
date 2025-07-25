@@ -29,17 +29,12 @@ const KYCReviewModal: React.FC<KYCReviewModalProps> = ({
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/v1/compliance/kyc-reviews/${review.id}/approve`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ notes })
-      // });
-
-      console.log('Approving KYC review:', review.id, notes);
+      const kycReviewService = new (await import('../services/KYCReviewService')).KYCReviewService();
+      await kycReviewService.approveReview(review.id, 'current-user', notes);
       onReviewUpdated();
     } catch (error) {
       console.error('Failed to approve KYC review:', error);
+      alert('Failed to approve KYC review. Please try again.');
     } finally {
       setLoading(false);
       setActiveAction(null);
@@ -59,17 +54,12 @@ const KYCReviewModal: React.FC<KYCReviewModalProps> = ({
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/v1/compliance/kyc-reviews/${review.id}/reject`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ rejectionReason, notes })
-      // });
-
-      console.log('Rejecting KYC review:', review.id, rejectionReason, notes);
+      const kycReviewService = new (await import('../services/KYCReviewService')).KYCReviewService();
+      await kycReviewService.rejectReview(review.id, 'current-user', rejectionReason, notes);
       onReviewUpdated();
     } catch (error) {
       console.error('Failed to reject KYC review:', error);
+      alert('Failed to reject KYC review. Please try again.');
     } finally {
       setLoading(false);
       setActiveAction(null);
@@ -90,17 +80,12 @@ const KYCReviewModal: React.FC<KYCReviewModalProps> = ({
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/v1/compliance/kyc-reviews/${review.id}/request-info`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ requestDetails, notes })
-      // });
-
-      console.log('Requesting more info for KYC review:', review.id, requestDetails, notes);
+      const kycReviewService = new (await import('../services/KYCReviewService')).KYCReviewService();
+      await kycReviewService.requestMoreInfo(review.id, 'current-user', requestDetails, notes);
       onReviewUpdated();
     } catch (error) {
       console.error('Failed to request more info:', error);
+      alert('Failed to request more information. Please try again.');
     } finally {
       setLoading(false);
       setActiveAction(null);

@@ -6,47 +6,11 @@ import CaseManagement from './components/CaseManagement';
 import KYCReviewQueue from './components/KYCReviewQueue';
 import ComplianceAlerts from './components/ComplianceAlerts';
 import ComplianceDashboard from './components/ComplianceDashboard';
+import { useComplianceData } from './hooks/useComplianceData';
 
 const ComplianceAML: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [stats, setStats] = useState({
-    totalCases: 0,
-    openCases: 0,
-    highPriorityCases: 0,
-    overdueReviews: 0,
-    pendingKYC: 0,
-    approvedToday: 0
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadComplianceStats();
-  }, []);
-
-  const loadComplianceStats = async () => {
-    setIsLoading(true);
-    try {
-      // TODO: Replace with actual API calls
-      // const [complianceResponse, kycResponse] = await Promise.all([
-      //   fetch('/api/v1/compliance/stats'),
-      //   fetch('/api/v1/compliance/kyc-stats')
-      // ]);
-      
-      // Mock data for demonstration
-      setStats({
-        totalCases: 156,
-        openCases: 23,
-        highPriorityCases: 8,
-        overdueReviews: 5,
-        pendingKYC: 34,
-        approvedToday: 12
-      });
-    } catch (error) {
-      console.error('Failed to load compliance stats:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { stats, isLoading, error, refreshStats } = useComplianceData();
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Shield },
@@ -62,6 +26,14 @@ const ComplianceAML: React.FC = () => {
         subtitle="Manage compliance cases, KYC reviews, and anti-money laundering monitoring"
         actions={
           <div className="flex space-x-3">
+            <button
+              onClick={refreshStats}
+              disabled={isLoading}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center disabled:opacity-50"
+            >
+              <Shield size={16} className="mr-2" />
+              {isLoading ? 'Refreshing...' : 'Refresh Stats'}
+            </button>
             <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center">
               <AlertTriangle size={16} className="mr-2" />
               Create Case
@@ -74,11 +46,19 @@ const ComplianceAML: React.FC = () => {
         }
       />
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-800 dark:text-red-200">
+            Error loading compliance data: {error}
+          </p>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
         <StatsCard
           title="Total Cases"
-          value={stats.totalCases.toString()}
+          value={isLoading ? '...' : stats.totalCases.toString()}
           change="+12 this month"
           changeType="neutral"
           icon={Shield}
@@ -86,7 +66,7 @@ const ComplianceAML: React.FC = () => {
         />
         <StatsCard
           title="Open Cases"
-          value={stats.openCases.toString()}
+          value={isLoading ? '...' : stats.openCases.toString()}
           change="+3 today"
           changeType="negative"
           icon={AlertTriangle}
@@ -94,7 +74,7 @@ const ComplianceAML: React.FC = () => {
         />
         <StatsCard
           title="High Priority"
-          value={stats.highPriorityCases.toString()}
+          value={isLoading ? '...' : stats.highPriorityCases.toString()}
           change="-2 this week"
           changeType="positive"
           icon={Flag}
@@ -102,7 +82,7 @@ const ComplianceAML: React.FC = () => {
         />
         <StatsCard
           title="Overdue Reviews"
-          value={stats.overdueReviews.toString()}
+          value={isLoading ? '...' : stats.overdueReviews.toString()}
           change="Urgent attention"
           changeType="negative"
           icon={Clock}
@@ -110,7 +90,7 @@ const ComplianceAML: React.FC = () => {
         />
         <StatsCard
           title="Pending KYC"
-          value={stats.pendingKYC.toString()}
+          value={isLoading ? '...' : stats.pendingKYC.toString()}
           change="+8 new today"
           changeType="neutral"
           icon={FileCheck}
@@ -118,7 +98,7 @@ const ComplianceAML: React.FC = () => {
         />
         <StatsCard
           title="Approved Today"
-          value={stats.approvedToday.toString()}
+          value={isLoading ? '...' : stats.approvedToday.toString()}
           change="+15% vs yesterday"
           changeType="positive"
           icon={CheckCircle}

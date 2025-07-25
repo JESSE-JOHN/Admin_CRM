@@ -7,7 +7,7 @@ interface CaseDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   case: ComplianceCase;
-  onCaseUpdated: () => void;
+  onCaseUpdated: (caseId: string, updates: any) => Promise<void>;
 }
 
 const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
@@ -28,18 +28,13 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/v1/compliance/cases/${complianceCase.id}/notes`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ content: newNote, isInternal })
-      // });
-
-      console.log('Adding note to case:', complianceCase.id, newNote);
+      const complianceService = new (await import('../services/ComplianceService')).ComplianceService();
+      await complianceService.addCaseNote(complianceCase.id, newNote, 'current-user', isInternal);
       setNewNote('');
-      onCaseUpdated();
+      await onCaseUpdated(complianceCase.id, {});
     } catch (error) {
       console.error('Failed to add note:', error);
+      alert('Failed to add note. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,17 +43,10 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const handleStatusChange = async (newStatus: ComplianceCaseStatus) => {
     if (window.confirm(`Are you sure you want to change the case status to ${newStatus.replace(/_/g, ' ')}?`)) {
       try {
-        // TODO: Replace with actual API call
-        // await fetch(`/api/v1/compliance/cases/${complianceCase.id}`, {
-        //   method: 'PUT',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ status: newStatus })
-        // });
-
-        console.log('Updating case status:', complianceCase.id, newStatus);
-        onCaseUpdated();
+        await onCaseUpdated(complianceCase.id, { status: newStatus });
       } catch (error) {
         console.error('Failed to update case status:', error);
+        alert('Failed to update case status. Please try again.');
       }
     }
   };
@@ -71,18 +59,13 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/v1/compliance/cases/${complianceCase.id}/close`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ resolution })
-      // });
-
-      console.log('Closing case:', complianceCase.id, resolution);
+      const complianceService = new (await import('../services/ComplianceService')).ComplianceService();
+      await complianceService.closeCase(complianceCase.id, resolution, 'current-user');
       setShowCloseModal(false);
-      onCaseUpdated();
+      await onCaseUpdated(complianceCase.id, {});
     } catch (error) {
       console.error('Failed to close case:', error);
+      alert('Failed to close case. Please try again.');
     } finally {
       setLoading(false);
     }
